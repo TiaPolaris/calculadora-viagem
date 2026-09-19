@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Viagem | Rota Certa</title>
+    <title>Popô Trip | Calculadora de Viagem</title>
     <!-- Font Awesome (Ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- CSS do Mapa (Leaflet) -->
@@ -54,16 +54,19 @@
             margin-bottom: 22px;
         }
 
-        .header h1 {
-            font-size: 24px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        .header-logo {
+            max-width: 260px;
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto 10px auto;
+            filter: drop-shadow(0 0 12px rgba(0, 255, 136, 0.35));
+            transition: transform 0.3s ease;
         }
 
-        .header h1 i { color: var(--neon-green); }
+        .header-logo:hover {
+            transform: scale(1.03);
+        }
 
         .header p {
             font-size: 13px;
@@ -86,10 +89,6 @@
         }
 
         label i { color: var(--neon-green); width: 16px; text-align: center; }
-
-        .input-wrapper {
-            position: relative;
-        }
 
         input[type="text"], input[type="number"] {
             width: 100%;
@@ -225,7 +224,7 @@
 
         /* Barra de Proporção */
         .cost-bar-container { margin: 15px 0; }
-        .cost-bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
+        .cost-bar-labels { display: flex; justify-between; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
         .cost-bar { height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; display: flex; }
         .cost-bar-fuel { background: var(--neon-green); height: 100%; transition: width 0.5s ease; }
         .cost-bar-toll { background: var(--accent-gold); height: 100%; transition: width 0.5s ease; }
@@ -288,8 +287,9 @@
 
 <div class="container">
     <div class="header">
-        <h1><i class="fa-solid fa-route"></i> Rota Certa</h1>
-        <p>Calcule o custo total de combustível e pedágio para sua viagem</p>
+        <!-- Logótipo do Popô Trip -->
+        <img src="logo.png" alt="Popô Trip" class="header-logo">
+        <p>Calcule o custo total de combustível e pedágio para a sua viagem</p>
     </div>
 
     <!-- Tipo de Viagem -->
@@ -517,7 +517,6 @@
 
         if (!mapInstance) {
             mapInstance = L.map('mapa');
-            // CartoDB Dark Matter Tiles para combinar com o tema Dark/Neon
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap &copy; CARTO'
             }).addTo(mapInstance);
@@ -532,7 +531,6 @@
             "geometry": geometry
         };
 
-        // Rota em Verde Neon
         routeLayer = L.geoJSON(geojsonFeature, {
             style: { color: '#00ff88', weight: 5, opacity: 0.9 }
         }).addTo(mapInstance);
@@ -646,7 +644,7 @@
     function compartilharWhatsApp() {
         if (!dadosUltimoCalculo) return;
         const d = dadosUltimoCalculo;
-        let texto = `🚗 *Cálculo de Viagem - Rota Certa*\n\n`;
+        let texto = `🚗 *Cálculo de Viagem - Popô Trip*\n\n`;
         texto += `📍 *Rota:* ${d.origem} ➔ ${d.destino}\n`;
         texto += `🔄 *Tipo:* ${d.tipo}\n`;
         texto += `📏 *Distância:* ${d.distancia} km\n`;
@@ -657,7 +655,7 @@
         if (d.passageiros > 1) {
             texto += `👥 *Divisão (${d.passageiros} pessoas):* R$ ${d.custoPessoa} para cada\n`;
         }
-        texto += `\nCalculado via *Rota Certa* 💚`;
+        texto += `\nCalculado via *Popô Trip* 💚`;
 
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
     }
