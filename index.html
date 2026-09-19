@@ -1,1 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Custo de Viagem</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; width: 100%; }
+        h2 { text-align: center; color: #333; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        #resultado { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 5px; display: none; }
+        .loading { text-align: center; color: #666; font-style: italic; display: none; }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <h2>Custo da Viagem 🚗</h2>
+    
+    <label>Cidade de Origem (Ex: São Paulo, SP)</label>
+    <input type="text" id="origem" placeholder="Digite a origem">
+
+    <label>Cidade de Destino (Ex: Rio de Janeiro, RJ)</label>
+    <input type="text" id="destino" placeholder="Digite o destino">
+
+    <label>Preço do Combustível (R$/L)</label>
+    <input type="number" id="preco" step="0.01" placeholder="Ex: 5.80">
+
+    <label>Consumo do Veículo (km/L)</label>
+    <input type="number" id="consumo" step="0.1" placeholder="Ex: 12">
+
+    <label>Valor Total dos Pedágios (R$)</label>
+    <input type="number" id="pedagio" step="0.01" placeholder="Ex: 45.50" value="0">
+
+    <button onclick="calcularViagem()">Calcular Viagem</button>
+
+    <div class="loading" id="loading">Calculando rota e distância... aguarde.</div>
+    
+    <div id="resultado"></div>
+</div>
+
+<script>
+    async function obterCoordenadas(cidade) {
+        // Usa a API gratuita do Nominatim para buscar as coordenadas da cidade
+        const resposta = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade)}`);
+        const dados = await resposta.json();
+        if (dados.length === 0) throw new Error(`Cidade não encontrada: ${cidade}`);
+        return { lat: dados[0].lat, lon: dados[0].lon };
+    }
+
+    async function obterDistancia(coordOrigem, coordDestino) {
+        // Usa a API gratuita do OSRM para calcular a rota de carro
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordOrigem.lon},${coordOrigem.lat};${coordDestino.lon},${coordDestino.lat}?overview=false`;
+        const resposta = await fetch(url);
+        const dados = await resposta.json();
+        if (dados.code !== "Ok") throw new Error("Não foi possível calcular a rota.");
+        return dados.routes[0].distance / 1000; // Converte de metros para km
+    }
+
+    async function calcularViagem() {
+        const origem = document.getElementById('origem').value;
+        const destino = document.getElementById('destino').value;
+        const preco = parseFloat(document.getElementById('preco').value);
+        const consumo = parseFloat(document.getElementById('consumo').value);
+        const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
+
+        const resultadoDiv = document.getElementById('resultado');
+        const loadingDiv = document.getElementById('loading');
+
+        if (!origem || !destino || !preco || !consumo) {
+            alert("Por favor, preencha origem, destino, preço do combustível e consumo.");
+            return;
+        }
+
+        resultadoDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
+
+        try {
+            const coordOrigem = await obterCoordenadas(origem);
+            const coordDestino = await obterCoordenadas(destino);
+            const distanciaKm = await obterDistancia(coordOrigem, coordDestino);
+
+            const litrosNecessarios = distanciaKm / consumo;
+            const custoCombustivel = litrosNecessarios * preco;
+            const custoTotal = custoCombustivel + pedagio;
+
+            resultadoDiv.innerHTML = `
+                <strong>Distância:</strong> ${distanciaKm.toFixed(1)} km <br>
+                <strong>Combustível gasto:</strong> ${litrosNecessarios.toFixed(1)} Litros <br>
+                <strong>Custo com Combustível:</strong> R$ ${custoCombustivel.toFixed(2)} <br>
+                <strong>Pedágio:</strong> R$ ${pedagio.toFixed(2)} <br>
+                <hr>
+                <strong>Custo Total Estimado:</strong> <span style="color: green; font-size: 1.2em;">R$ ${custoTotal.toFixed(2)}</span>
+            `;
+            resultadoDiv.style.display = 'block';
+        } catch (error) {
+            alert("Erro: " + error.message);
+        } finally {
+            loadingDiv.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
