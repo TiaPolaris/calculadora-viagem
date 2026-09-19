@@ -6,15 +6,16 @@
     <title>Calculadora de Custo de Viagem</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; width: 100%; }
-        h2 { text-align: center; color: #333; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 420px; width: 100%; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
         label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .checkbox-container { margin-top: 10px; display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 14px; }
-        button { width: 100%; padding: 12px; margin-top: 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        input[type="text"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .checkbox-container { margin-top: 12px; display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 14px; cursor: pointer; }
+        button { width: 100%; padding: 12px; margin-top: 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #218838; }
-        #resultado { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 5px; display: none; }
-        .loading { text-align: center; color: #666; font-style: italic; display: none; }
+        #resultado { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 5px; display: none; line-height: 1.6; }
+        .loading { text-align: center; color: #666; font-style: italic; display: none; margin-top: 15px; }
+        .cidades-detectadas { font-size: 0.85em; color: #666; margin-bottom: 10px; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -22,34 +23,41 @@
 <div class="container">
     <h2>Custo da Viagem 🚗</h2>
     
-    <label>Cidade de Origem (Ex: São Paulo, SP)</label>
-    <input type="text" id="origem" placeholder="Digite a origem">
+    <label>Cidade de Origem</label>
+    <input type="text" id="origem" placeholder="Ex: Dourado, SP">
 
-    <label>Cidade de Destino (Ex: Rio de Janeiro, RJ)</label>
-    <input type="text" id="destino" placeholder="Digite o destino">
+    <label>Cidade de Destino</label>
+    <input type="text" id="destino" placeholder="Ex: Araraquara, SP">
 
     <label>Preço do Combustível (R$/L)</label>
-    <input type="number" id="preco" step="0.01" placeholder="Ex: 5.80">
+    <input type="text" id="preco" placeholder="Ex: 5,80">
 
     <label>Consumo do Veículo (km/L)</label>
-    <input type="number" id="consumo" step="0.1" placeholder="Ex: 12">
+    <input type="text" id="consumo" placeholder="Ex: 12,5">
 
     <label>Valor Total dos Pedágios (R$)</label>
-    <input type="number" id="pedagio" step="0.01" placeholder="Ex: 45.50" value="0">
+    <input type="text" id="pedagio" placeholder="Ex: 15,00" value="0">
     
-    <div class="checkbox-container">
+    <label class="checkbox-container">
         <input type="checkbox" id="estimarPedagio" onchange="alternarPedagioAuto()">
-        <label for="estimarPedagio" style="margin-top:0;">Estimar pedágio automático (~R$ 0,12/km)</label>
-    </div>
+        Estimar pedágio automático (~R$ 0,12/km)
+    </label>
 
     <button onclick="calcularViagem()">Calcular Viagem</button>
 
-    <div class="loading" id="loading">Calculando rota e distância... aguarde.</div>
+    <div class="loading" id="loading">Buscando cidades e calculando rota...</div>
     
     <div id="resultado"></div>
 </div>
 
 <script>
+    // Função para converter texto com vírgula em número válido
+    function converterParaNumero(valor) {
+        if (!valor) return 0;
+        let limpo = valor.toString().replace(',', '.').trim();
+        return parseFloat(limpo);
+    }
+
     function alternarPedagioAuto() {
         const campoPedagio = document.getElementById('pedagio');
         const estimar = document.getElementById('estimarPedagio').checked;
@@ -59,40 +67,62 @@
             campoPedagio.value = "";
         } else {
             campoPedagio.disabled = false;
-            campoPedagio.placeholder = "Ex: 45.50";
+            campoPedagio.placeholder = "Ex: 15,00";
             campoPedagio.value = "0";
         }
     }
 
     async function obterCoordenadas(cidade) {
-        const resposta = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade)}`);
+        // Busca com restrição para o Brasil e limite de 1 resultado
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade)}&countrycodes=br&limit=1`;
+        
+        const resposta = await fetch(url, {
+            headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' }
+        });
+        
         const dados = await resposta.json();
-        if (dados.length === 0) throw new Error(`Cidade não encontrada: ${cidade}`);
-        return { lat: dados[0].lat, lon: dados[0].lon };
+        if (!dados || dados.length === 0) {
+            throw new Error(`Não foi possível localizar a cidade "${cidade}". Tente adicionar o estado (ex: ${cidade}, SP).`);
+        }
+        
+        return { 
+            lat: dados[0].lat, 
+            lon: dados[0].lon, 
+            nomeExibicao: dados[0].display_name.split(',')[0] + ' - ' + (dados[0].display_name.split(',')[2] || '') 
+        };
     }
 
     async function obterDistancia(coordOrigem, coordDestino) {
         const url = `https://router.project-osrm.org/route/v1/driving/${coordOrigem.lon},${coordOrigem.lat};${coordDestino.lon},${coordDestino.lat}?overview=false`;
         const resposta = await fetch(url);
         const dados = await resposta.json();
-        if (dados.code !== "Ok") throw new Error("Não foi possível calcular a rota.");
-        return dados.routes[0].distance / 1000;
+        
+        if (dados.code !== "Ok" || !dados.routes || dados.routes.length === 0) {
+            throw new Error("Não foi possível traçar uma rota de carro entre as cidades informadas.");
+        }
+        
+        return dados.routes[0].distance / 1000; // Converte metros para km
     }
 
     async function calcularViagem() {
-        const origem = document.getElementById('origem').value;
-        const destino = document.getElementById('destino').value;
-        const preco = parseFloat(document.getElementById('preco').value);
-        const consumo = parseFloat(document.getElementById('consumo').value);
+        const origemInput = document.getElementById('origem').value;
+        const destinoInput = document.getElementById('destino').value;
+        const preco = converterParaNumero(document.getElementById('preco').value);
+        const consumo = converterParaNumero(document.getElementById('consumo').value);
         const estimarPedagio = document.getElementById('estimarPedagio').checked;
         
-        let pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
+        let pedagio = converterParaNumero(document.getElementById('pedagio').value);
 
         const resultadoDiv = document.getElementById('resultado');
         const loadingDiv = document.getElementById('loading');
 
-        if (!origem || !destino || !preco || !consumo) {
-            alert("Por favor, preencha origem, destino, preço do combustível e consumo.");
+        if (!origemInput || !destinoInput) {
+            alert("Por favor, digite as cidades de origem e destino.");
+            return;
+        }
+
+        if (isNaN(preco) || preco <= 0 || isNaN(consumo) || consumo <= 0) {
+            alert("Por favor, informe valores válidos para o preço do combustível e para o consumo.");
             return;
         }
 
@@ -100,11 +130,10 @@
         loadingDiv.style.display = 'block';
 
         try {
-            const coordOrigem = await obterCoordenadas(origem);
-            const coordDestino = await obterCoordenadas(destino);
+            const coordOrigem = await obterCoordenadas(origemInput);
+            const coordDestino = await obterCoordenadas(destinoInput);
             const distanciaKm = await obterDistancia(coordOrigem, coordDestino);
 
-            // Se a opção de estimar estiver ativa, calcula R$ 0,12 por km
             if (estimarPedagio) {
                 pedagio = distanciaKm * 0.12;
             }
@@ -114,16 +143,20 @@
             const custoTotal = custoCombustivel + pedagio;
 
             resultadoDiv.innerHTML = `
-                <strong>Distância:</strong> ${distanciaKm.toFixed(1)} km <br>
-                <strong>Combustível gasto:</strong> ${litrosNecessarios.toFixed(1)} Litros <br>
+                <div class="cidades-detectadas">
+                    📍 <strong>Rota:</strong> ${coordOrigem.nomeExibicao} ➔ ${coordDestino.nomeExibicao}
+                </div>
+                <strong>Distância rodoviária:</strong> ${distanciaKm.toFixed(1)} km <br>
+                <strong>Combustível necessário:</strong> ${litrosNecessarios.toFixed(1)} Litros <br>
                 <strong>Custo com Combustível:</strong> R$ ${custoCombustivel.toFixed(2)} <br>
                 <strong>Pedágio ${estimarPedagio ? '(Estimado)' : ''}:</strong> R$ ${pedagio.toFixed(2)} <br>
                 <hr>
-                <strong>Custo Total Estimado:</strong> <span style="color: green; font-size: 1.2em;">R$ ${custoTotal.toFixed(2)}</span>
+                <strong>Custo Total Estimado:</strong> <br>
+                <span style="color: #28a745; font-size: 1.3em; font-weight: bold;">R$ ${custoTotal.toFixed(2)}</span>
             `;
             resultadoDiv.style.display = 'block';
         } catch (error) {
-            alert("Erro: " + error.message);
+            alert("Atenção: " + error.message);
         } finally {
             loadingDiv.style.display = 'none';
         }
