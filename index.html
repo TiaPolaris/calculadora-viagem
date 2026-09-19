@@ -270,6 +270,28 @@
 
         footer p { margin-bottom: 4px; }
 
+        .donate-link {
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            padding: 6px 12px;
+            background: rgba(255, 183, 3, 0.1);
+            border: 1px solid rgba(255, 183, 3, 0.25);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .donate-link:hover {
+            background: rgba(255, 183, 3, 0.2);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
         .insta-link {
             color: var(--neon-green);
             text-decoration: none;
@@ -287,7 +309,7 @@
 
 <div class="container">
     <div class="header">
-        <!-- Logótipo do Popô Trip (Atualizado com URL externa) -->
+        <!-- Logótipo do Popô Trip (Atualizado) -->
         <img src="https://i.postimg.cc/x8p8mBYN/logo-png.png" alt="Popô Trip" class="header-logo">
         <p>Calcule o custo total de combustível e pedágio para a sua viagem</p>
     </div>
@@ -408,11 +430,14 @@
 </div>
 
 <footer>
+    <p>
+        <a href="https://livepix.gg/tiapolaris" target="_blank" class="donate-link">
+            <i class="fa-solid fa-heart" style="color: #ff4757;"></i> Contribua via LivePix para manter online & com melhores APIs
+        </a>
+    </p>
     <p>Desenvolvido com 💚 por <strong>Tia Polaris</strong></p>
     <a href="https://www.instagram.com/tiapolariss/" target="_blank" class="insta-link">
         <i class="fa-brands fa-instagram"></i> @TiaPolaris
-        <a href="https://livepix.gg/tiapolaris" target="_blank" class="insta-link">
-        <i class="fa-brands fa-instagram"></i> Doações Para Manuteção da Calculadora
     </a>
 </footer>
 
