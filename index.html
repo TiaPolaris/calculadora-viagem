@@ -1,90 +1,288 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projeto com Logo</title>
+    <title>Website Completo</title>
     <style>
+        /* RESET E VARIÁVEIS DE ESTILO */
+        :root {
+            --bg-primary: #0f0f12;
+            --bg-secondary: #18181c;
+            --accent-color: #00d2ff;
+            --text-color: #f0f0f5;
+            --text-muted: #a0a0b0;
+            --card-bg: #202026;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121214;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            background-color: var(--bg-primary);
+            color: var(--text-color);
+            line-height: 1.6;
         }
 
-        /* Cabecalho e alinhamento da Logo */
+        /* HEADER E NAVEGAÇÃO */
         header {
+            position: fixed;
+            top: 0;
             width: 100%;
-            padding: 20px;
-            background-color: #1a1a1e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            background-color: rgba(24, 24, 28, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .logo-container {
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            padding: 15px 20px;
         }
 
-        .logo {
-            max-width: 200px;
-            height: auto;
-            display: block;
+        .logo-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo-img {
+            height: 50px;
+            width: auto;
             object-fit: contain;
             transition: transform 0.3s ease;
         }
 
-        .logo:hover {
+        .logo-img:hover {
             transform: scale(1.05);
         }
 
-        /* Conteudo Principal */
-        main {
-            max-width: 800px;
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-color);
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+
+        /* SECÇÃO PRINCIPAL (HERO) */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            margin-top: 50px;
-            padding: 0 20px;
+            padding: 120px 20px 60px;
+            background: radial-gradient(circle at center, rgba(0, 210, 255, 0.08) 0%, transparent 70%);
         }
 
-        h1 {
-            font-size: 2.2rem;
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ffffff, var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* SECÇÃO DE CARDS / SERVIÇOS */
+        .services {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 50px;
+            color: var(--text-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        .card h3 {
             margin-bottom: 15px;
-            color: #00d2ff;
+            color: var(--accent-color);
         }
 
-        p {
-            color: #a0a0b0;
-            font-size: 1.1rem;
-            line-height: 1.6;
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* RODAPÉ */
+        footer {
+            background-color: var(--bg-secondary);
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* RESPONSIVIDADE PARA DISPOSITIVOS MÓVEIS */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: var(--bg-secondary);
+                flex-direction: column;
+                padding: 20px;
+                text-align: center;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header com a Logo Inserida -->
+    <!-- CABEÇALHO -->
     <header>
-        <div class="logo-container">
-            <img src="https://i.postimg.cc/qqznWJDZ/logo.png" alt="Logo do Projeto" class="logo">
+        <div class="nav-container">
+            <a href="#" class="logo-link">
+                <!-- LOGO INSERIDA VIA POSTIMAGE -->
+                <img src="https://i.postimg.cc/qqznWJDZ/logo.png" alt="Logótipo Oficial" class="logo-img">
+            </a>
+            <button class="menu-toggle" id="mobile-menu-btn" aria-label="Abrir Menu">☰</button>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#inicio">Início</a></li>
+                <li><a href="#servicos">Serviços</a></li>
+                <li><a href="#sobre">Sobre</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
         </div>
     </header>
 
-    <!-- Conteudo da Pagina -->
-    <main>
-        <h1>Logo Carregada com Sucesso</h1>
-        <p>Este e o seu codigo completo. A imagem esta a ser puxada diretamente do servidor externo do PostImage.</p>
-    </main>
+    <!-- SECÇÃO PRINCIPAL -->
+    <section id="inicio" class="hero">
+        <div class="hero-content">
+            <h1>Projeto Integrado</h1>
+            <p>Página completa com carregamento direto da logo a partir do servidor PostImage.</p>
+            <a href="#servicos" class="btn">Explorar Recursos</a>
+        </div>
+    </section>
+
+    <!-- SECÇÃO DE CONTEÚDO -->
+    <section id="servicos" class="services">
+        <h2 class="section-title">Recursos do Layout</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Totalmente Responsivo</h3>
+                <p>O menu e a disposição dos elementos adaptam-se a ecrãs de telemóveis, tablets e computadores.</p>
+            </div>
+            <div class="card">
+                <h3>Design Dark Neon</h3>
+                <p>Estilo moderno com alto contraste, pensado para legibilidade e visual apelativo.</p>
+            </div>
+            <div class="card">
+                <h3>Estrutura Limpa</h3>
+                <p>HTML, CSS e JS organizados no mesmo ficheiro para facilitar o teste e integração imediata.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- RODAPÉ -->
+    <footer id="contacto">
+        <p>&copy; Todos os direitos reservados. Logótipo hospedado em PostImage.</p>
+    </footer>
+
+    <!-- INTERATIVIDADE JS -->
+    <script>
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const navLinks = document.getElementById('nav-links');
+
+        menuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+    </script>
 
 </body>
 </html>
