@@ -4,18 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Custo de Viagem</title>
+    <!-- CSS do Mapa (Leaflet) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 420px; width: 100%; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .container { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 480px; width: 100%; }
         h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
+        label { display: block; margin-top: 12px; font-weight: bold; color: #555; font-size: 14px; }
         input[type="text"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .checkbox-container { margin-top: 12px; display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 14px; cursor: pointer; }
-        button { width: 100%; padding: 12px; margin-top: 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .checkbox-container { margin-top: 12px; display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 13px; color: #444; cursor: pointer; }
+        button { width: 100%; padding: 12px; margin-top: 18px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #218838; }
-        #resultado { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 5px; display: none; line-height: 1.6; }
+        #mapa { height: 200px; width: 100%; margin-top: 15px; border-radius: 8px; display: none; }
+        #resultado { margin-top: 15px; padding: 15px; background-color: #e9ecef; border-radius: 5px; display: none; line-height: 1.6; }
         .loading { text-align: center; color: #666; font-style: italic; display: none; margin-top: 15px; }
-        .cidades-detectadas { font-size: 0.85em; color: #666; margin-bottom: 10px; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #ddd; }
+        .dica-km { font-size: 11px; color: #777; font-weight: normal; }
+        .alerta-aviso { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 10px; border-radius: 5px; font-size: 12px; margin-top: 12px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -24,10 +28,15 @@
     <h2>Custo da Viagem 🚗</h2>
     
     <label>Cidade de Origem</label>
-    <input type="text" id="origem" placeholder="Ex: Dourado, SP">
+    <input type="text" id="origem" list="origem-lista" placeholder="Digite para buscar (ex: Dourado)" autocomplete="off" oninput="buscarSugestoes('origem', 'origem-lista')">
+    <datalist id="origem-lista"></datalist>
 
     <label>Cidade de Destino</label>
-    <input type="text" id="destino" placeholder="Ex: Araraquara, SP">
+    <input type="text" id="destino" list="destino-lista" placeholder="Digite para buscar (ex: Araraquara)" autocomplete="off" oninput="buscarSugestoes('destino', 'destino-lista')">
+    <datalist id="destino-lista"></datalist>
+
+    <label>Distância da Viagem (km) <span class="dica-km">(Preenchido auto, mas alterável)</span></label>
+    <input type="text" id="distanciaManual" placeholder="Calculado auto ou digite o km real">
 
     <label>Preço do Combustível (R$/L)</label>
     <input type="text" id="preco" placeholder="Ex: 5,80">
@@ -36,22 +45,28 @@
     <input type="text" id="consumo" placeholder="Ex: 12,5">
 
     <label>Valor Total dos Pedágios (R$)</label>
-    <input type="text" id="pedagio" placeholder="Ex: 15,00" value="0">
+    <input type="text" id="pedagio" placeholder="Ex: 12,00" value="0">
     
     <label class="checkbox-container">
         <input type="checkbox" id="estimarPedagio" onchange="alternarPedagioAuto()">
-        Estimar pedágio automático (~R$ 0,12/km)
+        Estimar pedágio automático por km
     </label>
 
     <button onclick="calcularViagem()">Calcular Viagem</button>
 
-    <div class="loading" id="loading">Buscando cidades e calculando rota...</div>
+    <div class="loading" id="loading">Buscando cidades e traçando rota...</div>
     
+    <div id="mapa"></div>
     <div id="resultado"></div>
 </div>
 
+<!-- JS do Mapa (Leaflet) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Função para converter texto com vírgula em número válido
+    let mapInstance = null;
+    let routeLayer = null;
+    let debounceTimer = null;
+
     function converterParaNumero(valor) {
         if (!valor) return 0;
         let limpo = valor.toString().replace(',', '.').trim();
@@ -63,45 +78,107 @@
         const estimar = document.getElementById('estimarPedagio').checked;
         if (estimar) {
             campoPedagio.disabled = true;
-            campoPedagio.placeholder = "Calculado automaticamente";
+            campoPedagio.placeholder = "Estimativa aproximada por km";
             campoPedagio.value = "";
         } else {
             campoPedagio.disabled = false;
-            campoPedagio.placeholder = "Ex: 15,00";
+            campoPedagio.placeholder = "Ex: 12,00";
             campoPedagio.value = "0";
         }
     }
 
+    function buscarSugestoes(inputId, listId) {
+        clearTimeout(debounceTimer);
+        const query = document.getElementById(inputId).value.trim();
+
+        if (query.length < 3) return;
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5&addressdetails=1`;
+                const resposta = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+                const dados = await resposta.json();
+                
+                const datalist = document.getElementById(listId);
+                datalist.innerHTML = '';
+
+                dados.forEach(item => {
+                    const cidade = item.address.city || item.address.town || item.address.municipality || item.address.village || item.display_name.split(',')[0];
+                    const estado = item.address.state ? item.address.state : '';
+                    const nomeExibicao = `${cidade}${estado ? ', ' + estado : ''}`;
+
+                    const option = document.createElement('option');
+                    option.value = nomeExibicao;
+                    datalist.appendChild(option);
+                });
+            } catch (e) {
+                console.error("Erro na busca de sugestões", e);
+            }
+        }, 350);
+    }
+
     async function obterCoordenadas(cidade) {
-        // Busca com restrição para o Brasil e limite de 1 resultado
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade)}&countrycodes=br&limit=1`;
+        const termoBusca = cidade.toLowerCase().includes('brasil') ? cidade : `${cidade}, Brasil`;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termoBusca)}&limit=1`;
         
-        const resposta = await fetch(url, {
-            headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' }
-        });
-        
+        const resposta = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
         const dados = await resposta.json();
+        
         if (!dados || dados.length === 0) {
-            throw new Error(`Não foi possível localizar a cidade "${cidade}". Tente adicionar o estado (ex: ${cidade}, SP).`);
+            throw new Error(`Não foi possível localizar a cidade "${cidade}". Tente incluir a sigla do estado.`);
         }
         
         return { 
-            lat: dados[0].lat, 
-            lon: dados[0].lon, 
-            nomeExibicao: dados[0].display_name.split(',')[0] + ' - ' + (dados[0].display_name.split(',')[2] || '') 
+            lat: parseFloat(dados[0].lat), 
+            lon: parseFloat(dados[0].lon), 
+            nome: dados[0].display_name.split(',')[0]
         };
     }
 
-    async function obterDistancia(coordOrigem, coordDestino) {
-        const url = `https://router.project-osrm.org/route/v1/driving/${coordOrigem.lon},${coordOrigem.lat};${coordDestino.lon},${coordDestino.lat}?overview=false`;
+    async function obterRota(coordOrigem, coordDestino) {
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordOrigem.lon},${coordOrigem.lat};${coordDestino.lon},${coordDestino.lat}?overview=full&geometries=geojson`;
         const resposta = await fetch(url);
         const dados = await resposta.json();
         
         if (dados.code !== "Ok" || !dados.routes || dados.routes.length === 0) {
-            throw new Error("Não foi possível traçar uma rota de carro entre as cidades informadas.");
+            throw new Error("Não foi possível calcular a rota automática.");
         }
         
-        return dados.routes[0].distance / 1000; // Converte metros para km
+        return {
+            distanciaKm: dados.routes[0].distance / 1000,
+            geometry: dados.routes[0].geometry
+        };
+    }
+
+    function desenharMapa(coordOrigem, coordDestino, geometry) {
+        const mapaDiv = document.getElementById('mapa');
+        mapaDiv.style.display = 'block';
+
+        if (!mapInstance) {
+            mapInstance = L.map('mapa');
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(mapInstance);
+        }
+
+        if (routeLayer) {
+            mapInstance.removeLayer(routeLayer);
+        }
+
+        const geojsonFeature = {
+            "type": "Feature",
+            "geometry": geometry
+        };
+
+        routeLayer = L.geoJSON(geojsonFeature, {
+            style: { color: '#007bff', weight: 5, opacity: 0.7 }
+        }).addTo(mapInstance);
+
+        const bounds = L.latLngBounds([
+            [coordOrigem.lat, coordOrigem.lon],
+            [coordDestino.lat, coordDestino.lon]
+        ]);
+        mapInstance.fitBounds(bounds, { padding: [20, 20] });
     }
 
     async function calcularViagem() {
@@ -110,19 +187,19 @@
         const preco = converterParaNumero(document.getElementById('preco').value);
         const consumo = converterParaNumero(document.getElementById('consumo').value);
         const estimarPedagio = document.getElementById('estimarPedagio').checked;
-        
+        let kmManual = converterParaNumero(document.getElementById('distanciaManual').value);
         let pedagio = converterParaNumero(document.getElementById('pedagio').value);
 
         const resultadoDiv = document.getElementById('resultado');
         const loadingDiv = document.getElementById('loading');
 
         if (!origemInput || !destinoInput) {
-            alert("Por favor, digite as cidades de origem e destino.");
+            alert("Por favor, informe a origem e o destino.");
             return;
         }
 
         if (isNaN(preco) || preco <= 0 || isNaN(consumo) || consumo <= 0) {
-            alert("Por favor, informe valores válidos para o preço do combustível e para o consumo.");
+            alert("Por favor, informe o preço do combustível e o consumo do veículo.");
             return;
         }
 
@@ -132,7 +209,15 @@
         try {
             const coordOrigem = await obterCoordenadas(origemInput);
             const coordDestino = await obterCoordenadas(destinoInput);
-            const distanciaKm = await obterDistancia(coordOrigem, coordDestino);
+            
+            let distanciaKm = kmManual;
+
+            if (!kmManual || kmManual <= 0) {
+                const rota = await obterRota(coordOrigem, coordDestino);
+                distanciaKm = rota.distanciaKm;
+                document.getElementById('distanciaManual').value = distanciaKm.toFixed(1);
+                desenharMapa(coordOrigem, coordDestino, rota.geometry);
+            }
 
             if (estimarPedagio) {
                 pedagio = distanciaKm * 0.12;
@@ -143,20 +228,22 @@
             const custoTotal = custoCombustivel + pedagio;
 
             resultadoDiv.innerHTML = `
-                <div class="cidades-detectadas">
-                    📍 <strong>Rota:</strong> ${coordOrigem.nomeExibicao} ➔ ${coordDestino.nomeExibicao}
-                </div>
-                <strong>Distância rodoviária:</strong> ${distanciaKm.toFixed(1)} km <br>
+                📍 <strong>Rota:</strong> ${coordOrigem.nome} ➔ ${coordDestino.nome} <br>
+                <strong>Distância considerada:</strong> ${distanciaKm.toFixed(1)} km <br>
                 <strong>Combustível necessário:</strong> ${litrosNecessarios.toFixed(1)} Litros <br>
-                <strong>Custo com Combustível:</strong> R$ ${custoCombustivel.toFixed(2)} <br>
-                <strong>Pedágio ${estimarPedagio ? '(Estimado)' : ''}:</strong> R$ ${pedagio.toFixed(2)} <br>
+                <strong>Custo de Combustível:</strong> R$ ${custoCombustivel.toFixed(2)} <br>
+                <strong>Pedágio ${estimarPedagio ? '(Estimativa)' : ''}:</strong> R$ ${pedagio.toFixed(2)} <br>
                 <hr>
                 <strong>Custo Total Estimado:</strong> <br>
                 <span style="color: #28a745; font-size: 1.3em; font-weight: bold;">R$ ${custoTotal.toFixed(2)}</span>
+                
+                <div class="alerta-aviso">
+                    ⚠️ <strong>Aviso:</strong> Os valores de combustível e pedágio são estimativas. Tarifas de pedágio variam conforme as praças e concessionárias da rodovia. Para maior precisão, insira o valor exato das praças conhecidas no campo correspondente.
+                </div>
             `;
             resultadoDiv.style.display = 'block';
         } catch (error) {
-            alert("Atenção: " + error.message);
+            alert("Erro: " + error.message);
         } finally {
             loadingDiv.style.display = 'none';
         }
