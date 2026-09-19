@@ -3,663 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Popô Trip | Calculadora de Viagem</title>
-    <!-- Font Awesome (Ícones) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- CSS do Mapa (Leaflet) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Projeto com Logo</title>
     <style>
-        :root {
-            --bg-dark: #0a0e17;
-            --card-bg: rgba(18, 26, 41, 0.85);
-            --card-border: rgba(0, 255, 136, 0.25);
-            --neon-green: #00ff88;
-            --neon-green-hover: #00cc6a;
-            --neon-glow: rgba(0, 255, 136, 0.3);
-            --text-main: #f0f4f8;
-            --text-muted: #94a3b8;
-            --input-bg: #131b2e;
-            --accent-gold: #ffb703;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
         body {
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.08), transparent 70%);
-            color: var(--text-main);
-            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121214;
+            color: #ffffff;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            padding: 20px 15px;
+            min-height: 100vh;
         }
 
-        .container {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 15px var(--neon-glow);
-            max-width: 500px;
+        /* Cabecalho e alinhamento da Logo */
+        header {
             width: 100%;
-            padding: 25px;
-            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #1a1a1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 22px;
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .header-logo {
-            max-width: 260px;
-            width: 100%;
+        .logo {
+            max-width: 200px;
             height: auto;
             display: block;
-            margin: 0 auto 10px auto;
-            filter: drop-shadow(0 0 12px rgba(0, 255, 136, 0.35));
+            object-fit: contain;
             transition: transform 0.3s ease;
         }
 
-        .header-logo:hover {
-            transform: scale(1.03);
+        .logo:hover {
+            transform: scale(1.05);
         }
 
-        .header p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .form-group {
-            margin-bottom: 14px;
-        }
-
-        label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 6px;
-        }
-
-        label i { color: var(--neon-green); width: 16px; text-align: center; }
-
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 11px 14px;
-            background-color: var(--input-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"]:focus, input[type="number"]:focus {
-            border-color: var(--neon-green);
-            box-shadow: 0 0 8px var(--neon-glow);
-        }
-
-        .toggle-group {
-            display: flex;
-            background: var(--input-bg);
-            padding: 4px;
-            border-radius: 8px;
-            gap: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .toggle-btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            font-weight: bold;
-            font-size: 13px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-btn.active {
-            background-color: var(--neon-green);
-            color: #0a0e17;
-            box-shadow: 0 0 10px var(--neon-glow);
-        }
-
-        .checkbox-container {
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-        .checkbox-container input { accent-color: var(--neon-green); }
-
-        .btn-calc {
-            width: 100%;
-            padding: 14px;
-            margin-top: 18px;
-            background-color: var(--neon-green);
-            color: #0a0e17;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 0 15px var(--neon-glow);
-        }
-
-        .btn-calc:hover {
-            background-color: var(--neon-green-hover);
-            transform: translateY(-2px);
-        }
-
-        #mapa {
-            height: 220px;
-            width: 100%;
-            margin-top: 18px;
-            border-radius: 10px;
-            display: none;
-            border: 1px solid var(--card-border);
-        }
-
-        .loading {
+        /* Conteudo Principal */
+        main {
+            max-width: 800px;
             text-align: center;
-            color: var(--neon-green);
-            font-style: italic;
-            display: none;
-            margin-top: 15px;
-            font-size: 14px;
+            margin-top: 50px;
+            padding: 0 20px;
         }
 
-        /* Área de Resultados */
-        #resultado {
-            margin-top: 20px;
-            display: none;
-            animation: fadeIn 0.4s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .stat-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+        h1 {
+            font-size: 2.2rem;
             margin-bottom: 15px;
+            color: #00d2ff;
         }
 
-        .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
+        p {
+            color: #a0a0b0;
+            font-size: 1.1rem;
+            line-height: 1.6;
         }
-
-        .stat-card.full-width { grid-column: span 2; background: rgba(0, 255, 136, 0.05); border-color: var(--card-border); }
-
-        .stat-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: 18px; font-weight: bold; color: #fff; margin-top: 4px; }
-        .stat-value.highlight { color: var(--neon-green); font-size: 24px; }
-
-        /* Barra de Proporção */
-        .cost-bar-container { margin: 15px 0; }
-        .cost-bar-labels { display: flex; justify-between; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
-        .cost-bar { height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; display: flex; }
-        .cost-bar-fuel { background: var(--neon-green); height: 100%; transition: width 0.5s ease; }
-        .cost-bar-toll { background: var(--accent-gold); height: 100%; transition: width 0.5s ease; }
-
-        .btn-whatsapp {
-            width: 100%;
-            padding: 12px;
-            background-color: #25d366;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-whatsapp:hover { background-color: #1eb954; }
-
-        .alerta-aviso {
-            background-color: rgba(255, 183, 3, 0.1);
-            color: var(--accent-gold);
-            border: 1px solid rgba(255, 183, 3, 0.3);
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            margin-top: 15px;
-            line-height: 1.4;
-        }
-
-        /* Rodapé */
-        footer {
-            text-align: center;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 10px;
-        }
-
-        footer p { margin-bottom: 4px; }
-
-        .insta-link {
-            color: var(--neon-green);
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.3s ease;
-        }
-
-        .insta-link:hover { color: var(--neon-green-hover); text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <!-- Logótipo do Popô Trip -->
-        <img src="logo.png" alt="Popô Trip" class="header-logo">
-        <p>Calcule o custo total de combustível e pedágio para a sua viagem</p>
-    </div>
-
-    <!-- Tipo de Viagem -->
-    <div class="form-group">
-        <label><i class="fa-solid fa-arrows-left-right"></i> Tipo de Viagem</label>
-        <div class="toggle-group">
-            <button class="toggle-btn active" id="btnIda" onclick="setTipoViagem('ida')">Somente Ida</button>
-            <button class="toggle-btn" id="btnIdaVolta" onclick="setTipoViagem('idavolta')">Ida e Volta 🔄</button>
+    <!-- Header com a Logo Inserida -->
+    <header>
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/qqznWJDZ/logo.png" alt="Logo do Projeto" class="logo">
         </div>
-    </div>
+    </header>
 
-    <!-- Origem e Destino -->
-    <div class="form-group">
-        <label><i class="fa-solid fa-location-dot"></i> Cidade de Origem</label>
-        <input type="text" id="origem" list="origem-lista" placeholder="Ex: Dourado, SP" autocomplete="off" oninput="buscarSugestoes('origem', 'origem-lista')">
-        <datalist id="origem-lista"></datalist>
-    </div>
-
-    <div class="form-group">
-        <label><i class="fa-solid fa-flag-checkered"></i> Cidade de Destino</label>
-        <input type="text" id="destino" list="destino-lista" placeholder="Ex: Araraquara, SP" autocomplete="off" oninput="buscarSugestoes('destino', 'destino-lista')">
-        <datalist id="destino-lista"></datalist>
-    </div>
-
-    <!-- Distância e Veículo -->
-    <div class="form-group">
-        <label><i class="fa-solid fa-gauge-high"></i> Distância da Viagem (km)</label>
-        <input type="text" id="distanciaManual" placeholder="Calculado auto ou digite manual">
-    </div>
-
-    <div class="form-group" style="display: flex; gap: 10px;">
-        <div style="flex: 1;">
-            <label><i class="fa-solid fa-gas-pump"></i> Preço/L (R$)</label>
-            <input type="text" id="preco" placeholder="Ex: 5,80">
-        </div>
-        <div style="flex: 1;">
-            <label><i class="fa-solid fa-car"></i> Consumo (km/L)</label>
-            <input type="text" id="consumo" placeholder="Ex: 12,5">
-        </div>
-    </div>
-
-    <!-- Pedágio e Passageiros -->
-    <div class="form-group">
-        <label><i class="fa-solid fa-road-barrier"></i> Valor do Pedágio (R$)</label>
-        <input type="text" id="pedagio" placeholder="Ex: 12,00" value="0">
-        <label class="checkbox-container">
-            <input type="checkbox" id="estimarPedagio" onchange="alternarPedagioAuto()">
-            Estimar pedágio automático por km
-        </label>
-    </div>
-
-    <div class="form-group">
-        <label><i class="fa-solid fa-users"></i> Quantas pessoas vão dividir o custo?</label>
-        <input type="number" id="passageiros" value="1" min="1">
-    </div>
-
-    <button class="btn-calc" onclick="calcularViagem()">
-        <i class="fa-solid fa-calculator"></i> Calcular Viagem
-    </button>
-
-    <div class="loading" id="loading">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Traçando rota e calculando valores...
-    </div>
-
-    <div id="mapa"></div>
-
-    <!-- Área de Resultado -->
-    <div id="resultado">
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-title">Distância Total</div>
-                <div class="stat-value" id="resDistancia">0 km</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">Combustível</div>
-                <div class="stat-value" id="resLitros">0 L</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">Custo Combustível</div>
-                <div class="stat-value" id="resCustoCombustivel">R$ 0,00</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">Custo Pedágio</div>
-                <div class="stat-value" id="resCustoPedagio">R$ 0,00</div>
-            </div>
-            <div class="stat-card full-width">
-                <div class="stat-title">Custo Total Estimado</div>
-                <div class="stat-value highlight" id="resCustoTotal">R$ 0,00</div>
-            </div>
-            <div class="stat-card full-width" id="cardPorPessoa" style="display: none;">
-                <div class="stat-title">Valor por Pessoa</div>
-                <div class="stat-value" style="color: var(--neon-green);" id="resCustoPessoa">R$ 0,00</div>
-            </div>
-        </div>
-
-        <!-- Barra Proporcional -->
-        <div class="cost-bar-container">
-            <div class="cost-bar-labels">
-                <span style="color: var(--neon-green);">⛽ Combustível: <span id="labelPctCombustivel">0%</span></span>
-                <span style="color: var(--accent-gold);">💳 Pedágio: <span id="labelPctPedagio">0%</span></span>
-            </div>
-            <div class="cost-bar">
-                <div class="cost-bar-fuel" id="barCombustivel" style="width: 50%;"></div>
-                <div class="cost-bar-toll" id="barPedagio" style="width: 50%;"></div>
-            </div>
-        </div>
-
-        <button class="btn-whatsapp" onclick="compartilharWhatsApp()">
-            <i class="fa-brands fa-whatsapp"></i> Compartilhar no WhatsApp
-        </button>
-
-        <div class="alerta-aviso">
-            ⚠️ <strong>Nota:</strong> O valor do pedágio automático é uma estimativa por quilometragem. Praças de cobrança possuem valores fixos definidos por concessionárias. Para maior precisão, digite o valor exato no campo de pedágio.
-        </div>
-    </div>
-</div>
-
-<footer>
-    <p>Desenvolvido com 💚 por <strong>Tia Polaris</strong></p>
-    <a href="https://www.instagram.com/tiapolariss/" target="_blank" class="insta-link">
-        <i class="fa-brands fa-instagram"></i> @TiaPolaris
-    </a>
-</footer>
-
-<!-- JS do Mapa (Leaflet) -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    let mapInstance = null;
-    let routeLayer = null;
-    let debounceTimer = null;
-    let tipoViagemAtual = 'ida';
-    let dadosUltimoCalculo = null;
-
-    function setTipoViagem(tipo) {
-        tipoViagemAtual = tipo;
-        document.getElementById('btnIda').classList.toggle('active', tipo === 'ida');
-        document.getElementById('btnIdaVolta').classList.toggle('active', tipo === 'idavolta');
-    }
-
-    function converterParaNumero(valor) {
-        if (!valor) return 0;
-        let limpo = valor.toString().replace(',', '.').trim();
-        return parseFloat(limpo);
-    }
-
-    function alternarPedagioAuto() {
-        const campoPedagio = document.getElementById('pedagio');
-        const estimar = document.getElementById('estimarPedagio').checked;
-        if (estimar) {
-            campoPedagio.disabled = true;
-            campoPedagio.placeholder = "Estimado auto por km";
-            campoPedagio.value = "";
-        } else {
-            campoPedagio.disabled = false;
-            campoPedagio.placeholder = "Ex: 12,00";
-            campoPedagio.value = "0";
-        }
-    }
-
-    function buscarSugestoes(inputId, listId) {
-        clearTimeout(debounceTimer);
-        const query = document.getElementById(inputId).value.trim();
-        if (query.length < 3) return;
-
-        debounceTimer = setTimeout(async () => {
-            try {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5&addressdetails=1`;
-                const resposta = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
-                const dados = await resposta.json();
-                
-                const datalist = document.getElementById(listId);
-                datalist.innerHTML = '';
-
-                dados.forEach(item => {
-                    const cidade = item.address.city || item.address.town || item.address.municipality || item.address.village || item.display_name.split(',')[0];
-                    const estado = item.address.state ? item.address.state : '';
-                    const nomeExibicao = `${cidade}${estado ? ', ' + estado : ''}`;
-
-                    const option = document.createElement('option');
-                    option.value = nomeExibicao;
-                    datalist.appendChild(option);
-                });
-            } catch (e) {
-                console.error("Erro ao buscar cidades", e);
-            }
-        }, 350);
-    }
-
-    async function obterCoordenadas(cidade) {
-        const termoBusca = cidade.toLowerCase().includes('brasil') ? cidade : `${cidade}, Brasil`;
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termoBusca)}&limit=1`;
-        
-        const resposta = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
-        const dados = await resposta.json();
-        
-        if (!dados || dados.length === 0) {
-            throw new Error(`Cidade "${cidade}" não encontrada.`);
-        }
-        
-        return { 
-            lat: parseFloat(dados[0].lat), 
-            lon: parseFloat(dados[0].lon), 
-            nome: dados[0].display_name.split(',')[0]
-        };
-    }
-
-    async function obterRota(coordOrigem, coordDestino) {
-        const url = `https://router.project-osrm.org/route/v1/driving/${coordOrigem.lon},${coordOrigem.lat};${coordDestino.lon},${coordDestino.lat}?overview=full&geometries=geojson`;
-        const resposta = await fetch(url);
-        const dados = await resposta.json();
-        
-        if (dados.code !== "Ok" || !dados.routes || dados.routes.length === 0) {
-            throw new Error("Não foi possível calcular a rota.");
-        }
-        
-        return {
-            distanciaKm: dados.routes[0].distance / 1000,
-            geometry: dados.routes[0].geometry
-        };
-    }
-
-    function desenharMapa(coordOrigem, coordDestino, geometry) {
-        const mapaDiv = document.getElementById('mapa');
-        mapaDiv.style.display = 'block';
-
-        if (!mapInstance) {
-            mapInstance = L.map('mapa');
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap &copy; CARTO'
-            }).addTo(mapInstance);
-        }
-
-        if (routeLayer) {
-            mapInstance.removeLayer(routeLayer);
-        }
-
-        const geojsonFeature = {
-            "type": "Feature",
-            "geometry": geometry
-        };
-
-        routeLayer = L.geoJSON(geojsonFeature, {
-            style: { color: '#00ff88', weight: 5, opacity: 0.9 }
-        }).addTo(mapInstance);
-
-        const bounds = L.latLngBounds([
-            [coordOrigem.lat, coordOrigem.lon],
-            [coordDestino.lat, coordDestino.lon]
-        ]);
-        mapInstance.fitBounds(bounds, { padding: [25, 25] });
-    }
-
-    async function calcularViagem() {
-        const origemInput = document.getElementById('origem').value;
-        const destinoInput = document.getElementById('destino').value;
-        const preco = converterParaNumero(document.getElementById('preco').value);
-        const consumo = converterParaNumero(document.getElementById('consumo').value);
-        const estimarPedagio = document.getElementById('estimarPedagio').checked;
-        const passageiros = parseInt(document.getElementById('passageiros').value) || 1;
-        let kmManual = converterParaNumero(document.getElementById('distanciaManual').value);
-        let pedagioManual = converterParaNumero(document.getElementById('pedagio').value);
-
-        const resultadoDiv = document.getElementById('resultado');
-        const loadingDiv = document.getElementById('loading');
-
-        if (!origemInput || !destinoInput) {
-            alert("Informe a origem e o destino.");
-            return;
-        }
-
-        if (isNaN(preco) || preco <= 0 || isNaN(consumo) || consumo <= 0) {
-            alert("Informe o preço do combustível e o consumo do veículo.");
-            return;
-        }
-
-        resultadoDiv.style.display = 'none';
-        loadingDiv.style.display = 'block';
-
-        try {
-            const coordOrigem = await obterCoordenadas(origemInput);
-            const coordDestino = await obterCoordenadas(destinoInput);
-            
-            let distanciaBase = kmManual;
-
-            if (!kmManual || kmManual <= 0) {
-                const rota = await obterRota(coordOrigem, coordDestino);
-                distanciaBase = rota.distanciaKm;
-                document.getElementById('distanciaManual').value = distanciaBase.toFixed(1);
-                desenharMapa(coordOrigem, coordDestino, rota.geometry);
-            }
-
-            const multiplicadorViagem = (tipoViagemAtual === 'idavolta') ? 2 : 1;
-            const distanciaTotal = distanciaBase * multiplicadorViagem;
-
-            let pedagioTotal = 0;
-            if (estimarPedagio) {
-                pedagioTotal = distanciaTotal * 0.12;
-            } else {
-                pedagioTotal = pedagioManual * multiplicadorViagem;
-            }
-
-            const litrosNecessarios = distanciaTotal / consumo;
-            const custoCombustivel = litrosNecessarios * preco;
-            const custoTotal = custoCombustivel + pedagioTotal;
-            const custoPorPessoa = custoTotal / passageiros;
-
-            // Atualiza Interface
-            document.getElementById('resDistancia').innerText = `${distanciaTotal.toFixed(1)} km`;
-            document.getElementById('resLitros').innerText = `${litrosNecessarios.toFixed(1)} L`;
-            document.getElementById('resCustoCombustivel').innerText = `R$ ${custoCombustivel.toFixed(2)}`;
-            document.getElementById('resCustoPedagio').innerText = `R$ ${pedagioTotal.toFixed(2)}`;
-            document.getElementById('resCustoTotal').innerText = `R$ ${custoTotal.toFixed(2)}`;
-
-            if (passageiros > 1) {
-                document.getElementById('cardPorPessoa').style.display = 'block';
-                document.getElementById('resCustoPessoa').innerText = `R$ ${custoPorPessoa.toFixed(2)}`;
-            } else {
-                document.getElementById('cardPorPessoa').style.display = 'none';
-            }
-
-            // Barra de Proporção
-            const pctCombustivel = custoTotal > 0 ? (custoCombustivel / custoTotal) * 100 : 50;
-            const pctPedagio = custoTotal > 0 ? (pedagioTotal / custoTotal) * 100 : 50;
-
-            document.getElementById('barCombustivel').style.width = `${pctCombustivel}%`;
-            document.getElementById('barPedagio').style.width = `${pctPedagio}%`;
-            document.getElementById('labelPctCombustivel').innerText = `${pctCombustivel.toFixed(0)}%`;
-            document.getElementById('labelPctPedagio').innerText = `${pctPedagio.toFixed(0)}%`;
-
-            // Guarda para WhatsApp
-            dadosUltimoCalculo = {
-                origem: coordOrigem.nome,
-                destino: coordDestino.nome,
-                tipo: tipoViagemAtual === 'idavolta' ? 'Ida e Volta' : 'Somente Ida',
-                distancia: distanciaTotal.toFixed(1),
-                litros: litrosNecessarios.toFixed(1),
-                custoCombustivel: custoCombustivel.toFixed(2),
-                pedagio: pedagioTotal.toFixed(2),
-                custoTotal: custoTotal.toFixed(2),
-                passageiros: passageiros,
-                custoPessoa: custoPorPessoa.toFixed(2)
-            };
-
-            resultadoDiv.style.display = 'block';
-        } catch (error) {
-            alert("Erro: " + error.message);
-        } finally {
-            loadingDiv.style.display = 'none';
-        }
-    }
-
-    function compartilharWhatsApp() {
-        if (!dadosUltimoCalculo) return;
-        const d = dadosUltimoCalculo;
-        let texto = `🚗 *Cálculo de Viagem - Popô Trip*\n\n`;
-        texto += `📍 *Rota:* ${d.origem} ➔ ${d.destino}\n`;
-        texto += `🔄 *Tipo:* ${d.tipo}\n`;
-        texto += `📏 *Distância:* ${d.distancia} km\n`;
-        texto += `⛽ *Combustível:* R$ ${d.custoCombustivel} (${d.litros} L)\n`;
-        texto += `💳 *Pedágio:* R$ ${d.pedagio}\n`;
-        texto += `💰 *Custo Total:* R$ ${d.custoTotal}\n`;
-        
-        if (d.passageiros > 1) {
-            texto += `👥 *Divisão (${d.passageiros} pessoas):* R$ ${d.custoPessoa} para cada\n`;
-        }
-        texto += `\nCalculado via *Popô Trip* 💚`;
-
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-    }
-</script>
+    <!-- Conteudo da Pagina -->
+    <main>
+        <h1>Logo Carregada com Sucesso</h1>
+        <p>Este e o seu codigo completo. A imagem esta a ser puxada diretamente do servidor externo do PostImage.</p>
+    </main>
 
 </body>
 </html>
