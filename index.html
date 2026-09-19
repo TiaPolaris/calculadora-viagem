@@ -9,7 +9,8 @@
         .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; width: 100%; }
         h2 { text-align: center; color: #333; }
         label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
-        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .checkbox-container { margin-top: 10px; display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 14px; }
         button { width: 100%; padding: 12px; margin-top: 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
         button:hover { background-color: #218838; }
         #resultado { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 5px; display: none; }
@@ -35,6 +36,11 @@
 
     <label>Valor Total dos Pedágios (R$)</label>
     <input type="number" id="pedagio" step="0.01" placeholder="Ex: 45.50" value="0">
+    
+    <div class="checkbox-container">
+        <input type="checkbox" id="estimarPedagio" onchange="alternarPedagioAuto()">
+        <label for="estimarPedagio" style="margin-top:0;">Estimar pedágio automático (~R$ 0,12/km)</label>
+    </div>
 
     <button onclick="calcularViagem()">Calcular Viagem</button>
 
@@ -44,8 +50,21 @@
 </div>
 
 <script>
+    function alternarPedagioAuto() {
+        const campoPedagio = document.getElementById('pedagio');
+        const estimar = document.getElementById('estimarPedagio').checked;
+        if (estimar) {
+            campoPedagio.disabled = true;
+            campoPedagio.placeholder = "Calculado automaticamente";
+            campoPedagio.value = "";
+        } else {
+            campoPedagio.disabled = false;
+            campoPedagio.placeholder = "Ex: 45.50";
+            campoPedagio.value = "0";
+        }
+    }
+
     async function obterCoordenadas(cidade) {
-        // Usa a API gratuita do Nominatim para buscar as coordenadas da cidade
         const resposta = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade)}`);
         const dados = await resposta.json();
         if (dados.length === 0) throw new Error(`Cidade não encontrada: ${cidade}`);
@@ -53,12 +72,11 @@
     }
 
     async function obterDistancia(coordOrigem, coordDestino) {
-        // Usa a API gratuita do OSRM para calcular a rota de carro
         const url = `https://router.project-osrm.org/route/v1/driving/${coordOrigem.lon},${coordOrigem.lat};${coordDestino.lon},${coordDestino.lat}?overview=false`;
         const resposta = await fetch(url);
         const dados = await resposta.json();
         if (dados.code !== "Ok") throw new Error("Não foi possível calcular a rota.");
-        return dados.routes[0].distance / 1000; // Converte de metros para km
+        return dados.routes[0].distance / 1000;
     }
 
     async function calcularViagem() {
@@ -66,7 +84,9 @@
         const destino = document.getElementById('destino').value;
         const preco = parseFloat(document.getElementById('preco').value);
         const consumo = parseFloat(document.getElementById('consumo').value);
-        const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
+        const estimarPedagio = document.getElementById('estimarPedagio').checked;
+        
+        let pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
 
         const resultadoDiv = document.getElementById('resultado');
         const loadingDiv = document.getElementById('loading');
@@ -84,6 +104,11 @@
             const coordDestino = await obterCoordenadas(destino);
             const distanciaKm = await obterDistancia(coordOrigem, coordDestino);
 
+            // Se a opção de estimar estiver ativa, calcula R$ 0,12 por km
+            if (estimarPedagio) {
+                pedagio = distanciaKm * 0.12;
+            }
+
             const litrosNecessarios = distanciaKm / consumo;
             const custoCombustivel = litrosNecessarios * preco;
             const custoTotal = custoCombustivel + pedagio;
@@ -92,7 +117,7 @@
                 <strong>Distância:</strong> ${distanciaKm.toFixed(1)} km <br>
                 <strong>Combustível gasto:</strong> ${litrosNecessarios.toFixed(1)} Litros <br>
                 <strong>Custo com Combustível:</strong> R$ ${custoCombustivel.toFixed(2)} <br>
-                <strong>Pedágio:</strong> R$ ${pedagio.toFixed(2)} <br>
+                <strong>Pedágio ${estimarPedagio ? '(Estimado)' : ''}:</strong> R$ ${pedagio.toFixed(2)} <br>
                 <hr>
                 <strong>Custo Total Estimado:</strong> <span style="color: green; font-size: 1.2em;">R$ ${custoTotal.toFixed(2)}</span>
             `;
